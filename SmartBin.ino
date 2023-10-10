@@ -1,3 +1,10 @@
+/**
+ * Libraries needed:
+ * Wifi 1.2.7
+ * EspSoftwareSerial 8.1.0
+ * Firebase ESP32 Client 4.3.14
+ */
+
 #include <WiFi.h>
 #include <FirebaseESP32.h>
 
