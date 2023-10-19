@@ -9,7 +9,7 @@
 #include <WiFi.h>
 #include <FirebaseESP32.h>
 #include <SoftwareSerial.h>
-#include <TinyGPSPlus.h>
+#include <TinyGPS++.h>
 
 const char* ssid = "smartbin";
 const char* password = "smartbin";
@@ -18,7 +18,9 @@ const char* password = "smartbin";
 #define FIREBASE_HOST "https://smartbin-d94f7-default-rtdb.europe-west1.firebasedatabase.app/"
 #define FIREBASE_AUTH "96f39500cb59f6f63ca1d780e9a35b10ba1c2633"
 
-#define DATABASE_PATH "/smartbin/Bin1/percentage"
+#define PERCENTAGE "/smartbin/Bin1/percentage"
+#define LONGITUDE "/smartbin/Bin1/location/longitude"
+#define LATITUDE "/smartbin/Bin1/location/latitude"
 
 const int trigPin = 5;
 const int echoPin = 18;
@@ -48,6 +50,7 @@ void setup() {
 
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
+  delay(3000);
 }
 
 void loop() {
@@ -67,19 +70,22 @@ void loop() {
     Serial.print(percentage);
     Serial.println("% full");
 
-    Firebase.setFloat(firebaseData,DATABASE_PATH ,percentage);
+    Firebase.setFloat(firebaseData, PERCENTAGE, percentage);
     Serial.print("Data saved to Firebase: ");
     Serial.println(firebaseData.floatData());
   }
 
-  while (ss.available() > 0)
-    if (gps.encode(ss.read()))
-      displayInfo();
-  if (millis() > 5000 && gps.charsProcessed() < 10)
-  {
-    Serial.println(F("No GPS detected: check wiring."));
-    while (true);
+  while (ss.available() > 0) {
+    byte bytes = ss.read();
+    //Serial.write(bytes);
+    gps.encode(bytes);
   }
+//  if (millis() > 5000 && gps.charsProcessed() < 10)
+//  {
+//    Serial.println(F("No GPS detected: check wiring."));
+//    while (true);
+//  }
+  displayInfo();
   Serial.println("");
 
   delay(1000);
@@ -88,13 +94,9 @@ void loop() {
 void displayInfo()
 {
   Serial.print(F("Location: "));
-  if (gps.location.isValid()){
-    Serial.print(gps.location.lat(), 6);
-    Serial.print(F(","));
-    Serial.print(gps.location.lng(), 6);
-  }
-  else
-  {
-    Serial.print(F("INVALID"));
-  }
+  Serial.print(gps.location.lat(), 6);
+  Firebase.setDouble(firebaseData, LATITUDE, gps.location.lat());
+  Serial.print(F(","));
+  Serial.print(gps.location.lng(), 6);
+  Firebase.setDouble(firebaseData, LONGITUDE, gps.location.lng());
 }
